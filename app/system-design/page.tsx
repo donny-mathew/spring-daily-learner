@@ -1,15 +1,15 @@
-import { CurriculumList } from "@/components/system-design/CurriculumList";
+import { CurriculumGrid } from "@/components/system-design/CurriculumGrid";
 
 export default function SystemDesignPage() {
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-[var(--foreground)]">System Design Curriculum</h1>
-        <p className="text-sm text-[var(--muted)]">
-          55 topics covering fundamentals → microservices → advanced systems → Spring AI
+    <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">System Design Curriculum</h1>
+        <p className="mt-1.5 text-sm text-gray-500">
+          Explore 55 topics across 4 tiers with detailed explanations and interview questions
         </p>
       </div>
-      <CurriculumList />
+      <CurriculumGrid />
     </div>
   );
 }
