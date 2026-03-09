@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/* ─── CSS Variables ─────────────────────────────────────────────────────── */
+
+:root,
+[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --border-hover: #94a3b8;
+  --hover: #f1f5f9;
+  --card-bg: #ffffff;
+  --sidebar-bg: #f8fafc;
+  --badge-bg: #f1f5f9;
+  --code-bg: #f8fafc;
+  --code-header: #e2e8f0;
+  --code-text: #1e293b;
+}
+
+[data-theme="dark"] {
+  --background: #0d1117;
+  --foreground: #e6edf3;
+  --muted: #8b949e;
+  --border: #21262d;
+  --border-hover: #30363d;
+  --hover: #161b22;
+  --card-bg: #161b22;
+  --sidebar-bg: #010409;
+  --badge-bg: #21262d;
+  --code-bg: #0d1117;
+  --code-header: #21262d;
+  --code-text: #e6edf3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0d1117;
+    --foreground: #e6edf3;
+    --muted: #8b949e;
+    --border: #21262d;
+    --border-hover: #30363d;
+    --hover: #161b22;
+    --card-bg: #161b22;
+    --sidebar-bg: #010409;
+    --badge-bg: #21262d;
+    --code-bg: #0d1117;
+    --code-header: #21262d;
+    --code-text: #e6edf3;
+  }
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
