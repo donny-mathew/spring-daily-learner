@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { AppProgress } from "@/types";
 import { todayYMD } from "@/lib/utils";
 
@@ -31,61 +32,112 @@ function saveProgress(p: AppProgress): void {
 }
 
 export function useProgress() {
+  const { data: session, status } = useSession();
   const [hydrated, setHydrated] = useState(false);
   const [progress, setProgress] = useState<AppProgress>(defaultProgress);
+  const patchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Load progress: from API when authenticated, localStorage otherwise
   useEffect(() => {
-    setProgress(loadProgress());
-    setHydrated(true);
-  }, []);
+    if (status === "loading") return;
 
-  const markNewsRead = useCallback((itemId: string) => {
-    setProgress((prev) => {
-      const today = todayYMD();
-      const next: AppProgress = {
-        ...prev,
-        newsProgress: { ...prev.newsProgress, [itemId]: new Date().toISOString() },
-        dailyLog: { ...prev.dailyLog, [today]: true },
-      };
-      saveProgress(next);
-      return next;
-    });
-  }, []);
+    if (session?.user?.id) {
+      fetch("/api/progress")
+        .then((r) => r.json())
+        .then((data: AppProgress) => {
+          setProgress(data);
+          setHydrated(true);
+        })
+        .catch(() => {
+          setProgress(loadProgress());
+          setHydrated(true);
+        });
+    } else {
+      setProgress(loadProgress());
+      setHydrated(true);
+    }
+  }, [session?.user?.id, status]);
 
-  const markNewsUnread = useCallback((itemId: string) => {
-    setProgress((prev) => {
-      const next: AppProgress = {
-        ...prev,
-        newsProgress: { ...prev.newsProgress, [itemId]: null },
-      };
-      saveProgress(next);
-      return next;
-    });
-  }, []);
+  const persistProgress = useCallback(
+    (next: AppProgress) => {
+      if (session?.user?.id) {
+        // Optimistic: also keep localStorage as offline cache
+        saveProgress(next);
+        // Debounced PATCH to API
+        if (patchTimer.current) clearTimeout(patchTimer.current);
+        patchTimer.current = setTimeout(() => {
+          fetch("/api/progress", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(next),
+          }).catch(() => {});
+        }, 1000);
+      } else {
+        saveProgress(next);
+      }
+    },
+    [session?.user?.id]
+  );
 
-  const markLectureComplete = useCallback((slug: string) => {
-    setProgress((prev) => {
-      const today = todayYMD();
-      const next: AppProgress = {
-        ...prev,
-        lectureProgress: { ...prev.lectureProgress, [slug]: new Date().toISOString() },
-        dailyLog: { ...prev.dailyLog, [today]: true },
-      };
-      saveProgress(next);
-      return next;
-    });
-  }, []);
+  const markNewsRead = useCallback(
+    (itemId: string) => {
+      setProgress((prev) => {
+        const today = todayYMD();
+        const next: AppProgress = {
+          ...prev,
+          newsProgress: { ...prev.newsProgress, [itemId]: new Date().toISOString() },
+          dailyLog: { ...prev.dailyLog, [today]: true },
+        };
+        persistProgress(next);
+        return next;
+      });
+    },
+    [persistProgress]
+  );
 
-  const markLectureIncomplete = useCallback((slug: string) => {
-    setProgress((prev) => {
-      const next: AppProgress = {
-        ...prev,
-        lectureProgress: { ...prev.lectureProgress, [slug]: null },
-      };
-      saveProgress(next);
-      return next;
-    });
-  }, []);
+  const markNewsUnread = useCallback(
+    (itemId: string) => {
+      setProgress((prev) => {
+        const next: AppProgress = {
+          ...prev,
+          newsProgress: { ...prev.newsProgress, [itemId]: null },
+        };
+        persistProgress(next);
+        return next;
+      });
+    },
+    [persistProgress]
+  );
+
+  const markLectureComplete = useCallback(
+    (slug: string) => {
+      setProgress((prev) => {
+        const today = todayYMD();
+        const next: AppProgress = {
+          ...prev,
+          lectureProgress: { ...prev.lectureProgress, [slug]: new Date().toISOString() },
+          dailyLog: { ...prev.dailyLog, [today]: true },
+        };
+        persistProgress(next);
+        return next;
+      });
+    },
+    [persistProgress]
+  );
+
+  const markLectureIncomplete = useCallback(
+    (slug: string) => {
+      setProgress((prev) => {
+        const next: AppProgress = {
+          ...prev,
+          lectureProgress: { ...prev.lectureProgress, [slug]: null },
+        };
+        persistProgress(next);
+        return next;
+      });
+    },
+    [persistProgress]
+  );
 
   const isNewsRead = useCallback(
     (itemId: string) => Boolean(progress.newsProgress[itemId]),

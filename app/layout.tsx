@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { TopNav } from "@/components/layout/TopNav";
+import { SessionProvider } from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: "Spring Daily Learner",
@@ -11,8 +12,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <TopNav />
-        <main>{children}</main>
+        <SessionProvider>
+          <TopNav />
+          <main>{children}</main>
+        </SessionProvider>
       </body>
     </html>
   );
